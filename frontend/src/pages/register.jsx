@@ -20,7 +20,8 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/register', {
+      // Ensure the URL matches your backend registration endpoint
+      const response = await axios.post('http://localhost:5000/api/users/register', {
         first_name: firstName,
         last_name: lastName,
         PESEL,
@@ -43,7 +44,12 @@ const Register = () => {
       }, 2000); // Adjust the delay as needed
 
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      // Check if the error response exists and extract the message
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Registration failed. Please try again.');
+      }
       console.error(err);
     }
   };
@@ -98,7 +104,6 @@ const Register = () => {
           </button>
         </form>
 
-     
         <div className="mt-4 text-center">
           <button 
             onClick={() => navigate('/login')} // Redirect to /login

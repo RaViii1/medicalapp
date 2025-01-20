@@ -17,14 +17,24 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/login', { PESEL, password });
+      // Ensure the URL matches your backend login endpoint
+      const response = await axios.post('http://localhost:5000/api/users/login', { PESEL, password });
+
       // Handle successful login (e.g., store token or redirect)
       console.log(response.data);
       setSuccessMessage('Login successful!');
       setError('');
+
+      // Optionally store user data or token here (e.g., in localStorage)
+
       navigate('/admin'); // Redirect to /admin
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      // Check if the error response exists and extract the message
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
       console.error(err);
     }
   };

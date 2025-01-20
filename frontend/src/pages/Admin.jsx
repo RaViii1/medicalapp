@@ -23,7 +23,7 @@ const Admin = () => {
 
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/users'); // Adjust this endpoint as necessary
+        const response = await axios.get('http://localhost:5000/api/users'); 
         setUsers(response.data);
       } catch (err) {
         console.error('Error fetching users:', err);
@@ -69,34 +69,45 @@ const Admin = () => {
   // Function to update user role and specialization
   const updateUserRoleAndSpecialization = async (userId, newRoleName, specializationName) => {
     try {
-      // Fetch the role's ObjectId based on its name
-      const roleResponse = await axios.get(`http://localhost:5000/api/roles/${newRoleName}`);
-      
-      if (!roleResponse.data) {
-        throw new Error('Role not found');
-      }
+        // Fetch the role's ObjectId based on its name
+        const roleResponse = await axios.get(`http://localhost:5000/api/roles/${newRoleName}`);
+        
+        if (!roleResponse.data || !roleResponse.data._id) {
+            throw new Error('Role not found');
+        }
 
-      const newRoleId = roleResponse.data._id; // Assuming this returns the ObjectId of the role
+        const newRoleId = roleResponse.data._id; // Get the ObjectId of the role
 
-      // Set specialization to null if the new role is user or admin
-      const updatedData = { 
-        role: newRoleId,
-        specialization: (newRoleName === 'user' || newRoleName === 'admin') ? null : specializationName
-      };
+        // Set specialization to null if the new role is user or admin
+        const updatedData = { 
+            role: newRoleId,
+            specialization: (newRoleName === 'user' || newRoleName === 'admin') ? null : specializationName
+        };
 
-      await axios.put(`http://localhost:5000/api/users/${userId}`, updatedData);
-      
-      // Update the local state to reflect the change
-      setUsers(users.map(user => 
-        user._id === userId ? { ...user, role: { ...user.role, _id: newRoleId, name: newRoleName }, specialization: updatedData.specialization } : user
-      ));
-      
-      alert(`Rola użytkownika ${userId} została zaktualizowana do ${newRoleName} z specjalizacją ${updatedData.specialization || 'Brak'}`);
+        // Update user with new role and specialization
+        const response = await axios.put(`http://localhost:5000/api/users/${userId}`, updatedData);
+        
+        if (response.status !== 200) {
+            throw new Error('Failed to update user');
+        }
+
+        // Update local state to reflect the change
+        setUsers(users.map(user => 
+            user._id === userId ? { ...user, role: { _id: newRoleId, name: newRoleName }, specialization: updatedData.specialization } : user
+        ));
+        
+        alert(`Rola użytkownika ${userId} została zaktualizowana do ${newRoleName} z specjalizacją ${updatedData.specialization || 'Brak'}`);
     } catch (err) {
-      console.error('Error updating user role:', err);
-      setError('Failed to update user role.');
+        console.error('Error updating user role:', err);
+        
+        if (err.response && err.response.data && err.response.data.message) {
+            setError(err.response.data.message); // Display specific error message from backend
+        } else {
+            setError('Failed to update user role.');
+        }
     }
-  };
+};
+
 
   // Function to delete a user
   const deleteUser = async (userId) => {

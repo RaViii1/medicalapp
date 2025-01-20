@@ -11,6 +11,8 @@ const ScheduleAppointment = () => {
   const [pesel, setPesel] = useState('');
   const [error, setError] = useState('');
   const [viewingAppointments, setViewingAppointments] = useState(false);
+  const [loadingDoctors, setLoadingDoctors] = useState(false); // Loading state for doctors
+  const [loadingSpecializations, setLoadingSpecializations] = useState(true); // Loading state for specializations
 
   // Fetch specializations on component mount
   useEffect(() => {
@@ -21,6 +23,8 @@ const ScheduleAppointment = () => {
       } catch (err) {
         console.error('Error fetching specializations:', err);
         setError('Failed to load specializations.');
+      } finally {
+        setLoadingSpecializations(false); // Set loading to false after fetch
       }
     };
 
@@ -31,12 +35,16 @@ const ScheduleAppointment = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       if (selectedSpecialization) {
+        setLoadingDoctors(true); // Set loading to true while fetching doctors
         try {
-          const response = await axios.get(`http://localhost:5000/api/users?specialization=${selectedSpecialization}`);
+          // Fetch only doctors based on specialization
+          const response = await axios.get(`http://localhost:5000/api/users/doctors?specialization=${selectedSpecialization}`);
           setDoctors(response.data);
         } catch (err) {
           console.error('Error fetching doctors:', err);
           setError('Failed to load doctors.');
+        } finally {
+          setLoadingDoctors(false); // Set loading to false after fetch
         }
       } else {
         // Reset doctors if no specialization is selected
@@ -76,7 +84,11 @@ const ScheduleAppointment = () => {
       setPesel('');
     } catch (err) {
       console.error('Error scheduling appointment:', err);
-      setError('Failed to schedule appointment.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message); // Display specific error message from backend
+      } else {
+        setError('Failed to schedule appointment.');
+      }
     }
   };
 
@@ -109,29 +121,37 @@ const ScheduleAppointment = () => {
       ) : (
         <div className="mb-6">
           <label className="block mb-2 font-semibold">Wybierz Specjalizację:</label>
-          <select
-            value={selectedSpecialization}
-            onChange={(e) => setSelectedSpecialization(e.target.value)}
-            className="border border-gray-300 rounded p-2 mb-4 w-full"
-          >
-            <option value="">-- Wybierz specjalizację --</option>
-            {specializations.map(spec => (
-              <option key={spec._id} value={spec.name}>{spec.name}</option>
-            ))}
-          </select>
+          {loadingSpecializations ? (
+            <p>Loading specializations...</p>
+          ) : (
+            <select
+              value={selectedSpecialization}
+              onChange={(e) => setSelectedSpecialization(e.target.value)}
+              className="border border-gray-300 rounded p-2 mb-4 w-full"
+            >
+              <option value="">-- Wybierz specjalizację --</option>
+              {specializations.map(spec => (
+                <option key={spec._id} value={spec.name}>{spec.name}</option>
+              ))}
+            </select>
+          )}
 
           <label className="block mb-2 font-semibold">Wybierz Lekarza:</label>
-          <select
-            value={selectedDoctor}
-            onChange={(e) => setSelectedDoctor(e.target.value)}
-            className="border border-gray-300 rounded p-2 mb-4 w-full"
-            disabled={!selectedSpecialization}
-          >
-            <option value="">-- Wybierz lekarza --</option>
-            {doctors.map(doctor => (
-              <option key={doctor._id} value={doctor._id}>{doctor.first_name} {doctor.last_name}</option>
-            ))}
-          </select>
+          {loadingDoctors ? (
+            <p>Loading doctors...</p>
+          ) : (
+            <select
+              value={selectedDoctor}
+              onChange={(e) => setSelectedDoctor(e.target.value)}
+              className="border border-gray-300 rounded p-2 mb-4 w-full"
+              disabled={!selectedSpecialization}
+            >
+              <option value="">-- Wybierz lekarza --</option>
+              {doctors.map(doctor => (
+                <option key={doctor._id} value={doctor._id}>{doctor.first_name} {doctor.last_name}</option>
+              ))}
+            </select>
+          )}
 
           <label className="block mb-2 font-semibold">Wybierz Datę:</label>
           <input
