@@ -7,6 +7,7 @@ import LandingPage from './landingPage'; // Import your LandingPage component
 import Navbar from './components/navbar';
 import ScheduleAppointment from './pages/appointment';
 import Profile from './pages/Profile';
+import Appointments from './pages/DoctorAppointments';
 const App = () => {
   return (
     <Router>
@@ -18,6 +19,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/appointments" element={<Appointments />} />
           <Route path="/schedule" element={<ScheduleAppointment />} 
           /> 
           {/* Add more routes as needed */}

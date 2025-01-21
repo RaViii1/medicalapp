@@ -23,6 +23,32 @@ function verifyToken(req, res, next) {
     });
 }
 
+
+router.get('/user', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1]; // Wyciągnij token z nagłówka Authorization
+    if (!token) {
+      return res.status(401).json({ message: 'Brak tokena autoryzacyjnego' });
+    }
+  
+    try {
+      // Zweryfikuj token i uzyskaj dane z payloadu
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const doctorId = decoded.id; // Załóżmy, że ID doktora znajduje się w payloadzie
+  
+      // Znajdź wszystkie wizyty przypisane do tego doktora
+      const appointments = await Appointment.find({ doctorId });
+  
+      if (!appointments || appointments.length === 0) {
+        return res.status(404).json({ message: 'Brak wizyt dla tego doktora' });
+      }
+  
+      return res.json(appointments);
+    } catch (error) {
+      console.error('Błąd podczas pobierania wizyt:', error);
+      return res.status(500).json({ message: 'Błąd serwera' });
+    }
+  });
+
 // Tworzenie nowego terminu - dostępne tylko dla lekarzy i pacjentów
 router.post('/', verifyToken, async (req, res) => {
     const { doctorId, date, pesel } = req.body; // Pobieramy doctorId, date i pesel z ciała żądania
