@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import { useNavigate } from 'react-router-dom';
 const Admin = () => {
   const [specializations, setSpecializations] = useState([]);
   const [newSpecialization, setNewSpecialization] = useState('');
@@ -8,22 +8,38 @@ const Admin = () => {
   const [editingSpecializationId, setEditingSpecializationId] = useState(null);
   const [users, setUsers] = useState([]); // State for users
   const [error, setError] = useState('');
-
+  const navigate = useNavigate(); // Hook to navigate programmatically
   // Fetch specializations and users from the database on component mount
   useEffect(() => {
+    const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+    if (!token) {
+      setError('Brak tokenu. Zaloguj się ponownie.');
+      navigate('/'); 
+      return;
+    }
     const fetchSpecializations = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/specializations');
+        const response = await axios.get('http://localhost:5000/api/specializations', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         setSpecializations(response.data);
       } catch (err) {
         console.error('Error fetching specializations:', err);
-        setError('Failed to load specializations.');
+        setError('Blad podczas ladowania specjalizacji.');
       }
     };
 
     const fetchUsers = async () => {
+      const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+      if (!token) {
+        setError('Brak tokenu. Zaloguj się ponownie.');
+        navigate('/'); 
+        return;
+      }
       try {
-        const response = await axios.get('http://localhost:5000/api/users'); 
+        const response = await axios.get('http://localhost:5000/api/users', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         setUsers(response.data);
       } catch (err) {
         console.error('Error fetching users:', err);
@@ -36,41 +52,71 @@ const Admin = () => {
   }, []);
 
   const addSpecialization = async () => {
+    const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+    if (!token) {
+      setError('Brak tokenu. Zaloguj się ponownie.');
+      navigate('/'); 
+      return;
+    }
     if (newSpecialization.trim() === '' || newDescription.trim() === '') {
       setError('Nazwa i opis specjalizacji nie mogą być puste');
       return;
     }
     try {
-      const response = await axios.post('http://localhost:5000/api/specializations', { 
-        name: newSpecialization,
-        description: newDescription 
-      });
+      const response = await axios.post(
+        'http://localhost:5000/api/specializations',
+        {
+          name: newSpecialization,
+          description: newDescription
+        },
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+      
       setSpecializations([...specializations, response.data]);
       setNewSpecialization('');
       setNewDescription('');
       setError('');
     } catch (err) {
       console.error('Error adding specialization:', err);
-      setError('Failed to add specialization.');
+      setError('Blad podczas dodawania specjalizacji.');
     }
   };
 
   const removeSpecialization = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/specializations/${id}`);
+      
+      const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+      if (!token) {
+        setError('Brak tokenu. Zaloguj się ponownie.');
+        navigate('/'); 
+        return;
+      }
+      await axios.delete(`http://localhost:5000/api/specializations/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const updatedSpecializations = specializations.filter(spec => spec._id !== id);
       setSpecializations(updatedSpecializations);
     } catch (err) {
       console.error('Error removing specialization:', err);
-      setError('Failed to remove specialization.');
+      setError('Blad podczas usuwania specjalizacji.');
     }
   };
 
   // Function to update user role and specialization
   const updateUserRoleAndSpecialization = async (userId, newRoleName, specializationName) => {
     try {
+      const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+      if (!token) {
+        setError('Brak tokenu. Zaloguj się ponownie.');
+        navigate('/'); 
+        return;
+      }
         // Fetch the role's ObjectId based on its name
-        const roleResponse = await axios.get(`http://localhost:5000/api/roles/${newRoleName}`);
+        const roleResponse = await axios.get(`http://localhost:5000/api/roles/${newRoleName}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         
         if (!roleResponse.data || !roleResponse.data._id) {
             throw new Error('Role not found');
@@ -84,8 +130,14 @@ const Admin = () => {
             specialization: (newRoleName === 'user' || newRoleName === 'admin') ? null : specializationName
         };
 
+        
         // Update user with new role and specialization
-        const response = await axios.put(`http://localhost:5000/api/users/${userId}`, updatedData);
+        const response = await axios.put(
+          `http://localhost:5000/api/users/${userId}`, 
+          updatedData,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        
         
         if (response.status !== 200) {
             throw new Error('Failed to update user');
@@ -112,7 +164,16 @@ const Admin = () => {
   // Function to delete a user
   const deleteUser = async (userId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/users/${userId}`);
+      const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+      if (!token) {
+        setError('Brak tokenu. Zaloguj się ponownie.');
+        navigate('/'); 
+        return;
+      }
+
+      await axios.delete(`http://localhost:5000/api/users/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const updatedUsers = users.filter(user => user._id !== userId);
       setUsers(updatedUsers);
     } catch (err) {
@@ -136,10 +197,24 @@ const Admin = () => {
     }
     
     try {
-      await axios.put(`http://localhost:5000/api/specializations/${editingSpecializationId}`, { 
-        name: newSpecialization,
-        description: newDescription 
-      });
+      const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+      if (!token) {
+        setError('Brak tokenu. Zaloguj się ponownie.');
+        navigate('/'); 
+        return;
+      }
+
+      await axios.put(
+        `http://localhost:5000/api/specializations/${editingSpecializationId}`,
+        {
+          name: newSpecialization,
+          description: newDescription,
+          id: editingSpecializationId,
+        },
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
       
       // Update local state
       const updatedSpecs = specializations.map(spec =>
@@ -155,7 +230,7 @@ const Admin = () => {
       
     } catch (err) {
        console.error('Error updating specialization:', err);
-       setError('Failed to update specialization.');
+       setError('Blad podczas aktualizacji specjalizacji.');
      }
    };
 
@@ -252,8 +327,6 @@ const Admin = () => {
                  <option value="user">Użytkownik</option>
                  <option value="doctor">Lekarz</option>
                </select>
-
-             
 
                <button 
                  onClick={() => deleteUser(user._id)} 

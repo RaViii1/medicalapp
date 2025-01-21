@@ -5,25 +5,30 @@ const MyAppointments = () => {
   const [pesel, setPesel] = useState('');
   const [appointments, setAppointments] = useState([]);
   const [error, setError] = useState('');
+  const token = localStorage.getItem('token'); // Zakładając, że token jest przechowywany w localStorage
 
   const fetchAppointments = async () => {
     if (pesel) {
       try {
-        const response = await axios.get(`http://localhost:5000/api/users/appointments/${pesel}`);
-        console.log('Fetched appointments:', response.data); // Log fetched data
+        const response = await axios.get(`http://localhost:5000/api/users/appointments/${pesel}`, {
+          headers: {
+            'Authorization': `Bearer ${token}` // Dodanie tokena do nagłówka
+          }
+        });
+        console.log('Fetched appointments:', response.data); // Logowanie danych
         setAppointments(response.data);
       } catch (err) {
-        console.error('Error fetching appointments:', err);
-        setError('Failed to load appointments.');
+        console.error('Błąd podczas pobierania wizyt:', err);
+        setError('Nie udało się załadować wizyt.');
       }
     }
   };
 
   return (
-    <div className=" mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="mx-auto p-6 bg-white rounded-lg shadow-lg">
       <h3 className="text-3xl font-semibold mb-4 text-center text-blue-600">Moje Wizyty</h3>
       
-      {/* Input for PESEL */}
+      {/* Input do wprowadzenia PESEL */}
       <label className="block mb-2 font-semibold">Wprowadź swój PESEL:</label>
       <input
         type="text"
@@ -50,7 +55,7 @@ const MyAppointments = () => {
                 Data wizyty: {new Date(appointment.date).toLocaleString()}
               </div>
               <div className="text-gray-700">
-                Lekarz: {appointment.doctorFirstName} {appointment.doctorLastName} {/* Display doctor's name */}
+                Lekarz: {appointment.doctorFirstName} {appointment.doctorLastName} {/* Wyświetlanie imienia i nazwiska lekarza */}
               </div>
             </li>
           ))

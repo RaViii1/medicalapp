@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MyAppointments from '../components/MyAppointments'; // Import the new component
+import { useNavigate } from 'react-router-dom';
 
 const ScheduleAppointment = () => {
   const [specializations, setSpecializations] = useState([]);
@@ -13,16 +14,26 @@ const ScheduleAppointment = () => {
   const [viewingAppointments, setViewingAppointments] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false); // Loading state for doctors
   const [loadingSpecializations, setLoadingSpecializations] = useState(true); // Loading state for specializations
+  const navigate = useNavigate(); // Hook to navigate programmatically
+
 
   // Fetch specializations on component mount
   useEffect(() => {
     const fetchSpecializations = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/specializations');
+        const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+        if (!token) {
+          setError('Brak tokenu. Zaloguj się ponownie.');
+          navigate('/'); 
+          return;
+        }
+        const response = await axios.get('http://localhost:5000/api/specializations',  {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         setSpecializations(response.data);
       } catch (err) {
         console.error('Error fetching specializations:', err);
-        setError('Failed to load specializations.');
+        setError('Problem z ladowaniem specjalizacji.');
       } finally {
         setLoadingSpecializations(false); // Set loading to false after fetch
       }
@@ -38,11 +49,19 @@ const ScheduleAppointment = () => {
         setLoadingDoctors(true); // Set loading to true while fetching doctors
         try {
           // Fetch only doctors based on specialization
-          const response = await axios.get(`http://localhost:5000/api/users/doctors?specialization=${selectedSpecialization}`);
+          const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+          if (!token) {
+            setError('Brak tokenu. Zaloguj się ponownie.');
+            navigate('/'); 
+            return;
+          }
+          const response = await axios.get(`http://localhost:5000/api/users/doctors?specialization=${selectedSpecialization}`,  {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
           setDoctors(response.data);
         } catch (err) {
           console.error('Error fetching doctors:', err);
-          setError('Failed to load doctors.');
+          setError('Blad podczas wczytywania danych lekarzy.');
         } finally {
           setLoadingDoctors(false); // Set loading to false after fetch
         }
@@ -57,16 +76,25 @@ const ScheduleAppointment = () => {
 
   const handleScheduleAppointment = async () => {
     if (!selectedDoctor || !appointmentDate || !pesel) {
-      setError('Please select a doctor, a date and enter your PESEL.');
+      setError('Wybierz doktora, date, a takze podaj swoj pesel.');
       return;
     }
 
     try {
       // Check if user exists by PESEL
-      const userResponse = await axios.get(`http://localhost:5000/api/users/pesel/${pesel}`);
+      const token = localStorage.getItem('token'); // Pobieramy token z localStorage
+      if (!token) {
+        setError('Brak tokenu. Zaloguj się ponownie.');
+        navigate('/'); 
+        return;
+      }
+
+      const userResponse = await axios.get(`http://localhost:5000/api/users/pesel/${pesel}`,  {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       
       if (!userResponse.data) {
-        setError('User with this PESEL does not exist.');
+        setError('Uzytkownik z tym numerem pesel nie istnieje.');
         return;
       }
 
@@ -75,9 +103,11 @@ const ScheduleAppointment = () => {
         doctorId: selectedDoctor,
         date: appointmentDate,
         pesel: pesel,
+      },  {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      alert('Appointment scheduled successfully!');
+      alert('Wizyta umowiona!');
       // Reset the form
       setSelectedDoctor('');
       setAppointmentDate('');
@@ -122,7 +152,7 @@ const ScheduleAppointment = () => {
         <div className="mb-6">
           <label className="block mb-2 font-semibold">Wybierz Specjalizację:</label>
           {loadingSpecializations ? (
-            <p>Loading specializations...</p>
+            <p>Ladowanie specjalizacji...</p>
           ) : (
             <select
               value={selectedSpecialization}

@@ -30,7 +30,7 @@ const Register = () => {
       });
       
       // Set success message and clear input fields
-      setSuccessMessage('Registration successful! Please log in.');
+      setSuccessMessage('Rejestracja zakonczona pomyslnie! Zaloguj sie.');
       setFirstName('');
       setLastName('');
       setPESEL('');
@@ -48,7 +48,7 @@ const Register = () => {
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
       } else {
-        setError('Registration failed. Please try again.');
+        setError('Blad podczas rejestracji, sproboj ponownie.');
       }
       console.error(err);
     }
@@ -57,20 +57,20 @@ const Register = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-semibold mb-4">Register</h2>
+        <h2 className="text-2xl font-semibold mb-4">Zarejestruj sie</h2>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         {successMessage && <p className="text-green-500 mb-4">{successMessage}</p>}
         <form onSubmit={handleRegister} className="space-y-4">
           <input
             type="text"
-            placeholder="First Name"
+            placeholder="Imie"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded"
           />
           <input
             type="text"
-            placeholder="Last Name"
+            placeholder="Nazwisko"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded"
@@ -84,14 +84,14 @@ const Register = () => {
           />
           <input
             type="password"
-            placeholder="Password"
+            placeholder="Haslo"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded"
           />
           <input
             type="text"
-            placeholder="Phone Number"
+            placeholder="Numer telefonu"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded"
@@ -100,7 +100,7 @@ const Register = () => {
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-200"
           >
-            Register
+            Zarejestruj
           </button>
         </form>
 
@@ -108,7 +108,7 @@ const Register = () => {
           <button 
             onClick={() => navigate('/login')} // Redirect to /login
             className="text-blue-600 hover:underline">
-              Already have an account? Login here.
+              Masz juz konto? Zaloguj sie.
           </button>
         </div>
       </div>

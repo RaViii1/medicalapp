@@ -1,6 +1,8 @@
 import React from 'react';
 
 const Home = () => {
+  const isLoggedIn = localStorage.getItem('token') !== null;
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
@@ -34,13 +36,17 @@ const Home = () => {
 
           {/* Call to Action */}
           <div className="mt-6 text-center">
-            <a href="/register" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200">
-              Zarejestruj się
-            </a>
-            <span className="mx-2">lub</span>
-            <a href="/login" className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition duration-200">
-              Zaloguj się
-            </a>
+            {!isLoggedIn && (
+              <>
+                <a href="/register" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200">
+                  Zarejestruj się
+                </a>
+                <span className="mx-2">lub</span>
+                <a href="/login" className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition duration-200">
+                  Zaloguj się
+                </a>
+              </>
+            )}
           </div>
         </section>
       </main>

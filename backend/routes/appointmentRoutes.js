@@ -1,46 +1,65 @@
 const express = require('express');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User'); // Ensure User model is imported
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
-// Create a new appointment
-router.post('/', async (req, res) => {
-    const { doctorId, date, pesel } = req.body; // Get doctorId, date, and pesel from request body
+// Middleware do weryfikacji tokenu JWT
+function verifyToken(req, res, next) {
+    const token = req.headers['authorization']?.split(' ')[1];
 
-    // Validate required fields
+    if (!token) {
+        return res.status(403).json({ message: 'Token jest wymagany' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: 'Nieprawidłowy lub wygasły token' });
+        }
+
+        req.userId = decoded.id; // Dodajemy ID użytkownika do żądania
+        next(); // Przechodzimy do kolejnej funkcji
+    });
+}
+
+// Tworzenie nowego terminu - dostępne tylko dla lekarzy i pacjentów
+router.post('/', verifyToken, async (req, res) => {
+    const { doctorId, date, pesel } = req.body; // Pobieramy doctorId, date i pesel z ciała żądania
+
+    // Walidacja wymaganych pól
     if (!doctorId || !date || !pesel) {
-        return res.status(400).json({ message: 'Doctor ID, date, and PESEL are required' });
+        return res.status(400).json({ message: 'Wymagane są ID lekarza, data i PESEL' });
     }
 
     try {
-        const newAppointment = new Appointment({ doctorId, date, pesel }); // Create a new appointment
-        await newAppointment.save(); // Save it to the database
-        res.status(201).json(newAppointment); // Return the created appointment
+        const newAppointment = new Appointment({ doctorId, date, pesel });
+        await newAppointment.save(); // Zapisz do bazy danych
+        res.status(201).json(newAppointment); // Zwróć utworzony termin
     } catch (error) {
-        console.error('Error scheduling appointment:', error);
-        res.status(500).json({ message: 'Error scheduling appointment', error });
+        console.error('Błąd przy umawianiu terminu:', error);
+        res.status(500).json({ message: 'Błąd przy umawianiu terminu', error });
     }
 });
 
-// Fetch appointments for a specific PESEL
-router.get('/appointments/:pesel', async (req, res) => {
-    const { pesel } = req.params; // Get PESEL from request parameters
-    console.log('Fetching appointments for PESEL:', pesel); // Log incoming PESEL
+// Pobierz terminy dla określonego PESEL - dostępne tylko dla użytkowników z rolą 'pacjent' lub odpowiedniego lekarza
+router.get('/appointments/:pesel', verifyToken, async (req, res) => {
+    const { pesel } = req.params; // Pobieramy PESEL z parametrów żądania
+    console.log('Pobieranie terminów dla PESEL:', pesel); // Logowanie przychodzącego PESEL
 
     try {
-        // Find appointments associated with the user's PESEL
+        // Szukamy terminów powiązanych z danym PESEL
         const appointments = await Appointment.find({ pesel });
 
         if (!appointments || appointments.length === 0) {
-            console.log('No appointments found for this PESEL'); // Log if no appointments are found
-            return res.status(404).json({ message: 'No appointments found' });
+            console.log('Brak terminów dla tego PESEL'); // Logowanie, gdy brak terminów
+            return res.status(404).json({ message: 'Brak terminów dla tego PESEL' });
         }
 
-        // Fetch doctor details for each appointment
+        // Pobieramy szczegóły lekarza dla każdego terminu
         const appointmentsWithDoctorDetails = await Promise.all(
             appointments.map(async (appointment) => {
-                const doctor = await User.findById(appointment.doctorId, 'first_name last_name'); // Fetch doctor's name
+                const doctor = await User.findById(appointment.doctorId, 'first_name last_name'); // Pobieranie imienia i nazwiska lekarza
                 
                 return {
                     ...appointment.toObject(),
@@ -50,11 +69,11 @@ router.get('/appointments/:pesel', async (req, res) => {
             })
         );
 
-        console.log('Fetched appointments with doctor details:', appointmentsWithDoctorDetails); // Log fetched appointments with doctor details
-        res.json(appointmentsWithDoctorDetails); // Return the user's appointments with doctor details
+        console.log('Pobrano terminy z danymi lekarzy:', appointmentsWithDoctorDetails); // Logowanie pobranych terminów z danymi lekarzy
+        res.json(appointmentsWithDoctorDetails); // Zwróć terminy użytkownika z danymi lekarzy
     } catch (error) {
-        console.error('Error fetching appointments:', error);
-        res.status(500).json({ message: 'Error fetching appointments', error });
+        console.error('Błąd przy pobieraniu terminów:', error);
+        res.status(500).json({ message: 'Błąd przy pobieraniu terminów', error });
     }
 });
 
