@@ -24,6 +24,7 @@ const Navbar = () => {
             <>
               <Link to="/admin" className="text-white hover:bg-blue-700 px-3 py-2 rounded">Admin</Link>
               <Link to="/schedule" className="text-white hover:bg-blue-700 px-3 py-2 rounded">Wizyta</Link>
+              <Link to="/profile" className="text-white hover:bg-blue-700 px-3 py-2 rounded">Profil</Link>
 
               {/* Przycisk wylogowywania */}
               <button

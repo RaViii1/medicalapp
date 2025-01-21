@@ -248,4 +248,61 @@ router.get('/pesel/:pesel', verifyToken, async (req, res) => {
     }
 });
 
+
+// Pobierz dane użytkownika na podstawie tokenu
+router.get('/profile', verifyToken, async (req, res) => {
+    try {
+        // Pobierz użytkownika na podstawie ID zapisanej w tokenie
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Użytkownik nie został znaleziony' });
+        }
+
+        res.json(user); // Zwróć dane użytkownika
+    } catch (error) {
+        console.error('Błąd przy pobieraniu danych użytkownika:', error);
+        res.status(500).json({ message: 'Błąd przy pobieraniu danych użytkownika', error });
+    }
+});
+
+
+// Edytuj dane użytkownika na podstawie tokenu
+router.put('/profile/edit', verifyToken, async (req, res) => {
+    const { first_name, last_name, PESEL, phone_number } = req.body; // Pobieramy tylko dozwolone pola
+
+    try {
+        // Znajdź użytkownika na podstawie ID z tokena
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Użytkownik nie został znaleziony' });
+        }
+
+        // Aktualizujemy tylko określone pola
+        if (first_name) user.first_name = first_name;
+        if (last_name) user.last_name = last_name;
+        if (PESEL) user.PESEL = PESEL;
+        if (phone_number) user.phone_number = phone_number;
+
+        // Zapisujemy zmiany w bazie danych
+        const updatedUser = await user.save();
+
+        res.status(200).json({
+            message: 'Dane użytkownika zostały zaktualizowane',
+            user: {
+                first_name: updatedUser.first_name,
+                last_name: updatedUser.last_name,
+                PESEL: updatedUser.PESEL,
+                phone_number: updatedUser.phone_number
+            },
+        });
+    } catch (error) {
+        console.error('Błąd przy edycji danych użytkownika:', error);
+        res.status(500).json({ message: 'Wystąpił błąd przy edycji danych użytkownika', error });
+    }
+});
+
+
+
 module.exports = router;

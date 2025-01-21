@@ -6,7 +6,7 @@ import Login from './pages/login'; // Import your Login component
 import LandingPage from './landingPage'; // Import your LandingPage component
 import Navbar from './components/navbar';
 import ScheduleAppointment from './pages/appointment';
-
+import Profile from './pages/Profile';
 const App = () => {
   return (
     <Router>
@@ -17,7 +17,9 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<Admin />} />
-          <Route path="/schedule" element={<ScheduleAppointment />} /> 
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/schedule" element={<ScheduleAppointment />} 
+          /> 
           {/* Add more routes as needed */}
         </Routes>
       </div>
